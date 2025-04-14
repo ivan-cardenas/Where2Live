@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Load data from an external GeoJSON file</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
+    <style>
+      body { margin: 0; padding: 0; }
+
+      #info {
+      position: fixed;
+      width: 80%;
+      max-width: 400px;
+      height: 80%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 30px;
+      color: #3f4244;
+      background-color: #a9b0c7;
+      z-index: 1000;
+      border-radius: 20px;
+    }
+
+    #info-content {
+      width: 100%;
+      height: 80%;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 1em;
+    }
+
+    #info-content h1 {
+      margin-top: 0;
+    }
+
+    #info-content h3 {
+      margin-bottom: 0;
+    }
+
+    #info-content p {
+      width: 100%;
+      text-align: justify;
+    }
+
+    #info-button {
+      height: 50px;
+      padding: 1em;
+      text-align: center;
+    }
+
+    #info-button button {
+      padding: 0.5em;
+      color: #cfedff;
+      font-size: 1.25em;
+      font-weight: bold;
+      background-color: #1b3e6f;
+      outline: 0;
+      border: 0;
+      border-radius: 10px;
+    }
+
+    #info-button button:hover {
+      background-color: #a99521;
+      transition: 0.1s ease-in-out;
+    }
+
+      #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+      .mapboxgl-popup {
+        max-width: 400px;
+        font: 12px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+      }
+
+      .mapboxgl-popup-content {
+        padding: 15px;
+        border-radius: 5px;
+        
+      }
+
+      .mapboxgl-popup-content p{
+        margin-bottom: -10px;
+      }
+
+      .filter-group {
+        font: 12px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+        font-weight: 600;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1;
+        border-radius: 3px;
+        width: 120px;
+        color: #fff;
+      }
+      .filter-group input[type="checkbox"] { display: none; }
+      .filter-group input[type="checkbox"] + label {
+        background-color: #3386c0;
+        display: block;
+        cursor: pointer;
+        padding: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+      }
+      .filter-group input[type="checkbox"]:checked + label {
+        background-color: #4ea0da;
+      }
+      .filter-group input[type="checkbox"]:checked + label:before {
+        content: "✔";
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="info">
+      <div id="info-content">
+        <h3>Welcome to</h3>
+        <h1>My New House</h1>
+        <p>This map shows the location of the <b>Albert Heijn</b> and <b>Jumbo</b> supermarkets in the Netherlands. The green dots represent houses for rent inside a 5 minute walk from the supermarkets. Red dots are other houses for rent outside the 5min distance</p>
+        <p><b>Please allow some time for the map to process the distance to each supermarketr</b></p>
+        <p>The map also shows the <b>Life Barometer</b> layer, which is a measure of the quality of life in different areas. The color scale ranges from red (low quality of life) to green (high quality of life).</p>
+        <p><b>Click on the supermarket or house icons to see more information about them.</b></p>
+        <p>The information is retrieved from the <a href="https://www.funda.nl/en/">Funda</a> and <a href="https://www.pararis.nl/">Pararius</a> websites, which are popular real estate platforms in the Netherlands.</p>
+        <p>Designed by Iván Cárdenas</p>
+        <p><i>Last update: 14-04-2025 10:00 am</i></p>
+  
+      </div>
+      <div id="info-button" onclick="toggleInfo()">
+        <button>Explore the map</button>
+      </div>
+    </div>
+    <nav>
+      
+      <div id="filter-group" class="filter-group">
+      <!-- <button id="toggle-layer" class="filter-group">Life Barometer layer</button> </div>      -->
+    </nav>
+    
+
+    <div id="map"></div>
+
+    <script>
+      function toggleInfo() {
+      var x = document.getElementById("info");
+      if (x.style.display === "block") {
+        x.style.display = "none";
+      } else {
+        x.style.display = "block";
+      }
+    }
+
+
+      mapboxgl.accessToken = "pk.eyJ1IjoiY3lnbnVzMjYiLCJhIjoiY2s5Z2MzeWVvMGx3NTNtbzRnbGtsOXl6biJ9.8SLdJuFQzuN-s4OlHbwzLg";
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/cygnus26/clzmeog6f005c01qt8db6guh6",
+        projection: "globe",
+        zoom: 7,
+        center: [5, 52],
+      });
+
+    
+
+      map.on("style.load", () => map.setFog({}));
+
+      map.on("load", () => {
+        const filterGroup = document.getElementById("filter-group");
+
+        map.addSource("Stores", { type: "geojson", data: "./Assets/AH_Jumbos.json" });
+        map.addSource("Walking Distance", { type: "geojson", data: "./Assets/5minWalkAH_Jum.geojson" });
+        map.addSource("Houses", { type: "geojson", data: "./Assets/results.geojson" });
+        map.addSource("LifeBarometer", { type: "geojson", data: "./Assets/LifeBarometer.geojson"});
+        map.addSource("10minWalk", { type: "geojson", data: "./Assets/10minWalkAH_JUM.geojson" });
+
+        map.addLayer({
+          id: "LifeBarometer-layer",
+          type: "fill",
+          source: "LifeBarometer",
+          paint: {
+            "fill-color": [
+              "interpolate", ['linear'], ["get", "kscore"],
+              0, "#f05446",	
+              5, "#ede9d0",
+              9, "#5abab6"
+            ],
+            "fill-outline-opacity": 0.8,
+            "fill-opacity": 0.7
+          },
+          layout: {
+            visibility: "none"
+          }
+        });
+
+        map.addLayer({
+          id: "Walking-layer",
+          type: "fill",
+          source: "Walking Distance",
+          // filter: ["in", "Name", "Albert Heijn: 0 - 5", "Jumbo : 0 - 5"],
+          paint:{
+            "fill-color": [
+              "match", ["get", "Name"],
+              "Albert Heijn: 0 - 5", "#079dce",
+              "Jumbo : 0 - 5", "#6a5500",
+              "#f00"
+            ],
+            "fill-opacity": 0.5
+          }
+      });
+      
+      map.addLayer({
+          id: "10minWalking-layer",
+          type: "fill",
+          source: "10minWalk",
+          paint:{
+            "fill-color": [
+              "match", ["get", "Name"],
+              "Albert Heijn: 5 - 10", "#079dce",
+              "Jumbo : 5 - 10", "#6a5500",
+              "#f00"
+            ],
+            "fill-opacity": 0.2
+          }
+      });
+      
+
+        map.addLayer({
+          id: "stores-layer",
+          type: "circle",
+          source: "Stores",
+          paint: {
+            "circle-radius": 3,
+            "circle-color": [
+              "match", ["get", "brand"],
+              "Albert Heijn", "#08B0E7",
+              "Jumbo", "#FFCF08",
+              "Albert Heijn XL", "#08B0E7",
+              "Jumbo City", "#FFCF08",
+              "Jumbo Foodmarkt", "#FFCF08",
+              "#000"
+            ]
+          }
+        });
+
+        map.addLayer({
+          id:"Houses-layer",
+          type: "circle",
+          source: "Houses",
+          visibility: "visible",
+          paint: {
+            "circle-color": "#FF0000",
+            "circle-radius": 4
+          }
+        })
+
+        map.once("idle", () => {
+          
+        // Get all polygon features
+        const polygonFeatures = map.querySourceFeatures('Walking Distance');
+        
+        if (polygonFeatures.length > 0) {
+          // Create a filter expression that checks if a point is within any of the polygons
+          const withinExpressions = polygonFeatures.map(feature => 
+            ['within', feature.geometry]
+          );
+          
+          // Combine all within expressions with an 'any' operator
+          const withinAnyPolygon = ['any', ...withinExpressions];
+          
+          // Apply the filter to style your points
+          map.setPaintProperty('Houses-layer', 'circle-color', [
+            'case',
+            withinAnyPolygon,
+            '#00FF00', // Color for points within any polygon
+            '#d63232'  // Color for points outside all polygons
+          ]);
+
+          // You can also adjust the circle radius to make highlighted points more visible
+          map.setPaintProperty('Houses-layer', 'circle-radius', [
+          'case',
+           withinAnyPolygon,
+          4, // Larger radius for points within the polygon
+          3  // Original radius for points outside
+          ]);
+        }
+        });
+
+        
+
+        const categories = ["Albert Heijn", "Jumbo"];
+
+        categories.forEach((category) => {
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.id = category;
+          input.checked = true;
+          filterGroup.appendChild(input);
+          
+
+          const label = document.createElement("label");
+          label.setAttribute("for", category);
+          label.textContent = category;
+          filterGroup.appendChild(label);
+
+          
+
+          input.addEventListener("change", () => {
+            const checkedCategories = [...document.querySelectorAll("#filter-group input:checked")]
+              .map(input => input.id);
+
+            if (checkedCategories.length > 0) {
+              map.setFilter("Walking-layer", ["any", ...checkedCategories.map(cat => ["in", cat, ["get", "Name"]])]);
+              map.setFilter("stores-layer", ["in", ["get", "brand"], ["literal", checkedCategories]]);
+            } else {
+              map.setFilter("Walking-layer", ["==", ["get", "Name"], ""]);
+              map.setFilter("stores-layer", ["==", ["get", "brand"], ""]);
+            }
+          });
+        });
+      
+
+      // Set up the toggle button
+      // Add checkbox and label elements for the layer
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.id = 'layer-toggle';
+      input.checked = false;
+      filterGroup.appendChild(input);
+
+      const label = document.createElement('label');
+      label.setAttribute('for', 'layer-toggle');
+      label.textContent = 'Barometer Layer';
+      filterGroup.appendChild(label);
+
+      // When the checkbox changes, update the visibility of the layer
+      input.addEventListener('change', (e) => {
+          map.setLayoutProperty(
+              'LifeBarometer-layer',
+              'visibility',
+              e.target.checked ? 'visible' : 'none'
+          );
+      });
+
+       // Add checkbox and label elements for the layer
+      const rents = document.createElement('input');
+      rents.type = 'checkbox';
+      rents.id = 'rent-toggle';
+      rents.checked = true;
+      filterGroup.appendChild(rents);
+
+      const rentslabel = document.createElement('label');
+      rentslabel.setAttribute('for', 'rent-toggle');
+      rentslabel.textContent = 'To Rent';
+      filterGroup.appendChild(rentslabel);
+
+      // When the checkbox changes, update the visibility of the layer
+      rents.addEventListener('change', (e) => {
+          map.setLayoutProperty(
+              'Houses-layer',
+              'visibility',
+              e.target.checked ? 'visible' : 'none'
+          );
+      });
+    });
+
+      // For click-based popups instead of hover
+      map.on('click', 'stores-layer', (e) => {
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const properties = e.features[0].properties;
+        const brand = properties.brand;
+        const name = properties.name || brand;
+        const City = properties.addr_city;
+        const address = properties.addr_street || '';
+        const houseNumber = properties.addr_housenumber || '';
+        const postalCode = properties.addr_postcode || '';
+        
+        const description = `
+          <strong>${name} ${City}</strong>
+          <p>${address} ${houseNumber}, ${postalCode} </p>
+        `;
+        
+        if (['mercator', 'equirectangular'].includes(map.getProjection().name)) {
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+        }
+        
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(description)
+          .addTo(map);
+      });
+
+      map.on('click', 'Houses-layer', (e) => {
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const properties = e.features[0].properties;
+        
+        // Customize this HTML based on your actual data properties
+        const description = `<div style:"font-family: Arial, sans-serif;">
+          <strong>${properties.title || 'N/A'}</strong>
+          <p>Location: ${properties.postal_code || 'N/A'}</p>
+          <p>House Type: ${properties.house_type || 'N/A'}</p>
+          <p>Bedrooms: ${properties.bedrooms || 'N/A'}</p>
+          <p>Price: ${properties.rental_price || 'N/A'}</p>
+          <p>Offered Since: ${properties.offered_since || 'N/A'}</p>
+          <p>Status: ${properties.status || 'N/A'}</p>
+          <p>Available: ${properties.available || 'N/A'}</p>
+          <p>Service cost: ${properties.service_cost || 'N/A'}</p>
+          <p>Living_area: ${properties.living_area || 'N/A'}</p>
+          <p>Energy rating: ${properties.energy_rating || 'N/A'}</p>
+          <p>Link: <a href="${properties.url || '#'}" target="_blank">More info</a></p>
+        </div>`;
+        
+        if (['mercator', 'equirectangular'].includes(map.getProjection().name)) {
+          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+          }
+        }
+        
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(description)
+          .addTo(map);
+      });
+
+      // Still good to change cursor on hover for better UX
+      map.on('mouseenter', 'Houses-layer', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'Houses-layer', () => {
+        map.getCanvas().style.cursor = '';
+      });
+
+      // Still good to change cursor on hover for better UX
+      map.on('mouseenter', 'stores-layer', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'stores-layer', () => {
+        map.getCanvas().style.cursor = '';
+      });
+    
+    </script>
+  </body>
+</html>
