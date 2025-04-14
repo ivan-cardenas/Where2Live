@@ -166,11 +166,11 @@
       map.on("load", () => {
         const filterGroup = document.getElementById("filter-group");
 
-        map.addSource("Stores", { type: "geojson", data: "./Assets/AH_Jumbos.json" });
-        map.addSource("Walking Distance", { type: "geojson", data: "./Assets/5minWalkAH_Jum.geojson" });
-        map.addSource("Houses", { type: "geojson", data: "./Assets/results.geojson" });
-        map.addSource("LifeBarometer", { type: "geojson", data: "./Assets/LifeBarometer.geojson"});
-        map.addSource("10minWalk", { type: "geojson", data: "./Assets/10minWalkAH_JUM.geojson" });
+        map.addSource("Stores", { type: "geojson", data: "Assets/AH_Jumbos.json" });
+        map.addSource("Walking Distance", { type: "geojson", data: "Assets/5minWalkAH_Jum.geojson" });
+        map.addSource("Houses", { type: "geojson", data: "Assets/results.geojson" });
+        map.addSource("LifeBarometer", { type: "geojson", data: "Assets/LifeBarometer.geojson"});
+        map.addSource("10minWalk", { type: "geojson", data: "Assets/10minWalkAH_JUM.geojson" });
 
         map.addLayer({
           id: "LifeBarometer-layer",
