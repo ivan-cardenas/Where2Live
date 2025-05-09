@@ -8,8 +8,7 @@ function toggleInfo() {
     }
   }
 
-
-    mapboxgl.accessToken = "pk.eyJ1IjoiY3lnbnVzMjYiLCJhIjoiY2s5Z2MzeWVvMGx3NTNtbzRnbGtsOXl6biJ9.8SLdJuFQzuN-s4OlHbwzLg";
+mapboxgl.accessToken = "pk.eyJ1IjoiY3lnbnVzMjYiLCJhIjoiY2s5Z2MzeWVvMGx3NTNtbzRnbGtsOXl6biJ9.8SLdJuFQzuN-s4OlHbwzLg";
     const map = new mapboxgl.Map({
       container: "map",
       style: "mapbox://styles/cygnus26/clzmeog6f005c01qt8db6guh6",
@@ -20,9 +19,9 @@ function toggleInfo() {
 
   
 
-    map.on("style.load", () => map.setFog({}));
+map.on("style.load", () => map.setFog({}));
 
-    map.on("load", () => {
+map.on("load", () => {
       const filterGroup = document.getElementById("filter-group");
 
       map.addSource("Stores", { type: "geojson", data: "./Assets/AH_Jumbos.json" });
@@ -64,7 +63,7 @@ function toggleInfo() {
           ],
           "fill-opacity": 0.5
         }
-    });
+      });
     
     map.addLayer({
         id: "10minWalking-layer",
